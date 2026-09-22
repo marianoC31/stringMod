@@ -39,7 +39,6 @@ int main() {
         {"mcode3.txt", mcode3}
     };
 
-
     for (auto& trans : transmisiones) {
         for (auto& mc : mcodes) {
             int pos = kmpBuscarPrimera(trans.second, mc.second,
