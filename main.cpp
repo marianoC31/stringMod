@@ -53,5 +53,8 @@ int main() {
         }
     }
 
+    manacher(transmission1);
+    manacher(transmission2);
+    
     return 0;
 }
