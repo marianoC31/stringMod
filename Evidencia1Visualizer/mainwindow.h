@@ -3,8 +3,9 @@
 
 #include <QMainWindow>
 #include <QString>
+#include <QTimer>
 #include "../kmp.hpp"
-#include <Qtimer>
+#include "../lcs.hpp"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -17,18 +18,25 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow() override;
+
 private slots:
+    void cambiarParte();
     void actualizarSeleccion();
-    void iniciarKMP();
+    void iniciarAlgoritmo();
     void mostrarSiguienteEvento();
-    void pausarKMP();
-    void reiniciarKMP();
+    void pausar();
+    void reiniciar();
+
 private:
-    vector<Evento> eventos;
-    int eventoActual= 0;
+    vector<Evento> eventosKMP;
+    vector<EventoLCS> eventosLCS;
+    int eventoActual = 0;
     Ui::MainWindow *ui;
 
-    void mostrarEvento(const Evento &evento);
+    void mostrarEventoKMP(const Evento &evento);
+    void mostrarEventoLCS(const EventoLCS &evento);
+    void iniciarKMP();
+    void iniciarLCS();
 
     QTimer *timer;
     QString leerArchivo(const QString &ruta);

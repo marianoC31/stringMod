@@ -16,6 +16,7 @@ MainWindow::MainWindow(QWidget *parent)
             &QTimer::timeout,
             this,
             &MainWindow::mostrarSiguienteEvento);
+
     ui->comboParte->addItem("Parte 1 - KMP");
     ui->comboParte->addItem("Parte 2");
     ui->comboParte->addItem("Parte 3");
@@ -27,6 +28,10 @@ MainWindow::MainWindow(QWidget *parent)
     ui->comboMCode->addItem("mcode2.txt");
     ui->comboMCode->addItem("mcode3.txt");
 
+    connect(ui->comboParte,
+            &QComboBox::currentIndexChanged,
+            this,
+            &MainWindow::cambiarParte);
     connect(ui->comboTransmission,
             &QComboBox::currentIndexChanged,
             this,
@@ -38,15 +43,16 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->btnIniciar,
             &QPushButton::clicked,
             this,
-            &MainWindow::iniciarKMP);
+            &MainWindow::iniciarAlgoritmo);
     connect(ui->btnPausar,
             &QPushButton::clicked,
             this,
-            &MainWindow::pausarKMP);
+            &MainWindow::pausar);
     connect(ui->btnReiniciar,
             &QPushButton::clicked,
             this,
-            &MainWindow::reiniciarKMP);
+            &MainWindow::reiniciar);
+
     actualizarSeleccion();
 }
 
@@ -64,7 +70,6 @@ QString MainWindow::leerArchivo(const QString &ruta)
     }
 
     QTextStream entrada(&archivo);
-
     QString contenido;
     QString linea;
 
@@ -75,79 +80,181 @@ QString MainWindow::leerArchivo(const QString &ruta)
 
     return contenido;
 }
+
+void MainWindow::cambiarParte()
+{
+    timer->stop();
+    eventosKMP.clear();
+    eventosLCS.clear();
+    eventoActual = 0;
+    ui->transmissionView->setExtraSelections({});
+    ui->mcodeView->setExtraSelections({});
+
+    QString parte = ui->comboParte->currentText();
+
+    if (parte.contains("Parte 3")) {
+        ui->label->setText("Transmission 1:");
+        ui->label_2->setText("Transmission 2:");
+        ui->comboTransmission->setEnabled(false);
+        ui->comboMCode->setEnabled(false);
+
+        QString t1 = leerArchivo("transmission1.txt");
+        QString t2 = leerArchivo("transmission2.txt");
+
+        ui->transmissionView->setPlainText(t1);
+        ui->mcodeView->setPlainText(t2);
+        ui->lblEstado->setText("Estado: Listo para Parte 3 (LCS)\nPresione 'Iniciar' para buscar la subcadena común más larga.");
+    } else if (parte.contains("Parte 1")) {
+        ui->label->setText("Transmission:");
+        ui->label_2->setText("MCode:");
+        ui->comboTransmission->setEnabled(true);
+        ui->comboMCode->setEnabled(true);
+        actualizarSeleccion();
+    } else {
+        ui->lblEstado->setText("Estado: Parte 2 aún no disponible");
+    }
+}
+
 void MainWindow::actualizarSeleccion()
 {
-    QString nombreTransmission =
-        ui->comboTransmission->currentText();
-    QString nombreMCode =
-        ui->comboMCode->currentText();
-    QString transmission =
-        leerArchivo(nombreTransmission);
-    QString mcode =
-        leerArchivo(nombreMCode);
+    QString parte = ui->comboParte->currentText();
+    if (parte.contains("Parte 3")) return;
+
+    QString nombreTransmission = ui->comboTransmission->currentText();
+    QString nombreMCode = ui->comboMCode->currentText();
+    QString transmission = leerArchivo(nombreTransmission);
+    QString mcode = leerArchivo(nombreMCode);
 
     ui->transmissionView->setPlainText(transmission);
     ui->mcodeView->setPlainText(mcode);
-    ui->lblEstado->setText(
-        "Estado: Listo"
-        );
+    ui->lblEstado->setText("Estado: Listo");
 }
+
+void MainWindow::iniciarAlgoritmo()
+{
+    QString parte = ui->comboParte->currentText();
+    if (parte.contains("Parte 1")) {
+        iniciarKMP();
+    } else if (parte.contains("Parte 3")) {
+        iniciarLCS();
+    } else {
+        ui->lblEstado->setText("Estado: Seleccione Parte 1 o Parte 3");
+    }
+}
+
 void MainWindow::iniciarKMP()
 {
     timer->stop();
-    QString nombreTransmission =
-        ui->comboTransmission->currentText();
-    QString nombreMCode =
-        ui->comboMCode->currentText();
-    QString transmission =
-        leerArchivo(nombreTransmission);
-    QString mcode =
-        leerArchivo(nombreMCode);
-    eventos.clear();
+    QString nombreTransmission = ui->comboTransmission->currentText();
+    QString nombreMCode = ui->comboMCode->currentText();
+    QString transmission = leerArchivo(nombreTransmission);
+    QString mcode = leerArchivo(nombreMCode);
+
+    eventosKMP.clear();
     eventoActual = 0;
+
     int posicion = kmpBuscarPrimera(
         transmission.toStdString(),
         mcode.toStdString(),
-        &eventos,
+        &eventosKMP,
         nombreTransmission.toStdString(),
         nombreMCode.toStdString()
-        );
+    );
 
     if (posicion == -1) {
-        ui->lblEstado->setText(
-            "Estado: No encontrado"
-            );
+        ui->lblEstado->setText("Estado: No encontrado");
     } else {
-        ui->lblEstado->setText(
-            "Estado: Encontrado en posición " +
-            QString::number(posicion + 1)
-            );
+        ui->lblEstado->setText("Estado: Encontrado en posición " + QString::number(posicion + 1));
     }
-    if(!eventos.empty()){
+
+    if (!eventosKMP.empty()) {
         eventoActual = 0;
         timer->start(300);
     }
 }
+
+void MainWindow::iniciarLCS()
+{
+    timer->stop();
+    QString t1 = leerArchivo("transmission1.txt");
+    QString t2 = leerArchivo("transmission2.txt");
+
+    eventosLCS.clear();
+    eventoActual = 0;
+
+    ResultadoLCS res = longestCommonSubstring(
+        t1.toStdString(),
+        t2.toStdString(),
+        &eventosLCS,
+        "transmission1.txt",
+        "transmission2.txt"
+    );
+
+    if (res.longitud == 0) {
+        ui->lblEstado->setText("Estado: No se encontró subcadena común");
+    } else {
+        QString info = QString("Estado: Subcadena común más larga: \"%1\" (Longitud: %2)\n"
+                               "Transmission 1: [%3, %4]\n"
+                               "Transmission 2: [%5, %6]")
+                           .arg(QString::fromStdString(res.subcadena))
+                           .arg(res.longitud)
+                           .arg(res.inicioTexto1)
+                           .arg(res.finTexto1)
+                           .arg(res.inicioTexto2)
+                           .arg(res.finTexto2);
+        ui->lblEstado->setText(info);
+    }
+
+    if (!eventosLCS.empty()) {
+        eventoActual = 0;
+        timer->start(300);
+    }
+}
+
 void MainWindow::mostrarSiguienteEvento()
 {
-    if(eventoActual >= eventos.size()){
-        timer->stop();
-        ui->lblEstado->setText("Estado: Animación Terminadinski");
-        return;
-    }
-    const Evento &evento = eventos[eventoActual];
+    QString parte = ui->comboParte->currentText();
 
-    QString estado =
-        "Evento " + QString::number(eventoActual+1)+
-                     "/" + QString::number(eventos.size())+
-                     "\nTipo: " + QString::fromStdString(evento.tipo)+
-                     "\nPosición texto: " + QString::number(evento.posTexto) +
-                     "\nPosición patrón: " + QString::number(evento.posPatron);
-    ui->lblEstado->setText(estado);
-    mostrarEvento(evento);
-    eventoActual++;
+    if (parte.contains("Parte 3")) {
+        if (eventoActual >= eventosLCS.size()) {
+            timer->stop();
+            ui->lblEstado->setText(ui->lblEstado->text() + "\n✓ Animación completada");
+            return;
+        }
+
+        const EventoLCS &evento = eventosLCS[eventoActual];
+        QString estado = QString("Evento %1/%2\nTipo: %3\nPosición Texto 1: %4\nPosición Texto 2: %5\nLongitud: %6")
+                             .arg(eventoActual + 1)
+                             .arg(eventosLCS.size())
+                             .arg(QString::fromStdString(evento.tipo))
+                             .arg(evento.posTexto)
+                             .arg(evento.posPatron)
+                             .arg(evento.longitud);
+
+        ui->lblEstado->setText(estado);
+        mostrarEventoLCS(evento);
+        eventoActual++;
+    } else {
+        if (eventoActual >= eventosKMP.size()) {
+            timer->stop();
+            ui->lblEstado->setText("Estado: Animación Terminada");
+            return;
+        }
+
+        const Evento &evento = eventosKMP[eventoActual];
+        QString estado = "Evento " + QString::number(eventoActual + 1) +
+                         "/" + QString::number(eventosKMP.size()) +
+                         "\nTipo: " + QString::fromStdString(evento.tipo) +
+                         "\nPosición texto: " + QString::number(evento.posTexto) +
+                         "\nPosición patrón: " + QString::number(evento.posPatron);
+
+        ui->lblEstado->setText(estado);
+        mostrarEventoKMP(evento);
+        eventoActual++;
+    }
 }
-void MainWindow::mostrarEvento(const Evento &evento)
+
+void MainWindow::mostrarEventoKMP(const Evento &evento)
 {
     QFont fuente("Courier New");
     fuente.setStyleHint(QFont::Monospace);
@@ -155,43 +262,33 @@ void MainWindow::mostrarEvento(const Evento &evento)
     ui->transmissionView->setFont(fuente);
     ui->mcodeView->setFont(fuente);
 
-    QString mcode =
-        leerArchivo(QString::fromStdString(evento.archivoPatron));
+    QString mcode = leerArchivo(QString::fromStdString(evento.archivoPatron));
 
-    int inicioPatron =
-        evento.posTexto - evento.posPatron;
-
+    int inicioPatron = evento.posTexto - evento.posPatron;
     if (inicioPatron < 0) {
         inicioPatron = 0;
     }
 
-    QString mcodeDesplazado =
-        QString(inicioPatron, ' ') + mcode;
-
+    QString mcodeDesplazado = QString(inicioPatron, ' ') + mcode;
     ui->mcodeView->setPlainText(mcodeDesplazado);
 
     ui->transmissionView->setExtraSelections({});
     ui->mcodeView->setExtraSelections({});
 
     QTextCharFormat formato;
-
     if (evento.tipo == "comparando") {
         formato.setBackground(Qt::yellow);
         formato.setForeground(Qt::black);
-    }
-    else if (evento.tipo == "match_parcial") {
+    } else if (evento.tipo == "match_parcial") {
         formato.setBackground(Qt::green);
         formato.setForeground(Qt::black);
-    }
-    else if (evento.tipo == "mismatch") {
+    } else if (evento.tipo == "mismatch") {
         formato.setBackground(Qt::red);
         formato.setForeground(Qt::white);
-    }
-    else if (evento.tipo == "match_total") {
+    } else if (evento.tipo == "match_total") {
         formato.setBackground(Qt::blue);
         formato.setForeground(Qt::white);
-    }
-    else if (evento.tipo == "no encontradi") {
+    } else if (evento.tipo == "no encontrado" || evento.tipo == "no encontradi") {
         formato.setBackground(Qt::red);
         formato.setForeground(Qt::white);
     }
@@ -200,70 +297,112 @@ void MainWindow::mostrarEvento(const Evento &evento)
     QTextEdit::ExtraSelection seleccionPatron;
 
     if (evento.posTexto >= 0) {
-
-        QTextCursor cursorTexto(
-            ui->transmissionView->document()
-            );
-
+        QTextCursor cursorTexto(ui->transmissionView->document());
         cursorTexto.setPosition(evento.posTexto);
-
-        cursorTexto.movePosition(
-            QTextCursor::NextCharacter,
-            QTextCursor::KeepAnchor
-            );
-
+        cursorTexto.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor);
         seleccionTexto.cursor = cursorTexto;
         seleccionTexto.format = formato;
     }
 
     if (evento.posPatron >= 0) {
-
-        int posicionVisual =
-            inicioPatron + evento.posPatron;
-
-        QTextCursor cursorPatron(
-            ui->mcodeView->document()
-            );
-
+        int posicionVisual = inicioPatron + evento.posPatron;
+        QTextCursor cursorPatron(ui->mcodeView->document());
         cursorPatron.setPosition(posicionVisual);
-
-        cursorPatron.movePosition(
-            QTextCursor::NextCharacter,
-            QTextCursor::KeepAnchor
-            );
-
+        cursorPatron.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor);
         seleccionPatron.cursor = cursorPatron;
         seleccionPatron.format = formato;
     }
 
-    ui->transmissionView->setExtraSelections(
-        {seleccionTexto}
-        );
-
-    ui->mcodeView->setExtraSelections(
-        {seleccionPatron}
-        );
+    ui->transmissionView->setExtraSelections({seleccionTexto});
+    ui->mcodeView->setExtraSelections({seleccionPatron});
 }
-void MainWindow::pausarKMP()
+
+void MainWindow::mostrarEventoLCS(const EventoLCS &evento)
 {
-    if(timer->isActive()){
+    QFont fuente("Courier New");
+    fuente.setStyleHint(QFont::Monospace);
+
+    ui->transmissionView->setFont(fuente);
+    ui->mcodeView->setFont(fuente);
+
+    QString t1 = leerArchivo(QString::fromStdString(evento.archivoTexto));
+    QString t2 = leerArchivo(QString::fromStdString(evento.archivoPatron));
+
+    ui->transmissionView->setPlainText(t1);
+    ui->mcodeView->setPlainText(t2);
+
+    ui->transmissionView->setExtraSelections({});
+    ui->mcodeView->setExtraSelections({});
+
+    QTextCharFormat formato;
+    if (evento.tipo == "nuevo_maximo") {
+        formato.setBackground(QColor(255, 165, 0)); // Naranja
+        formato.setForeground(Qt::black);
+    } else if (evento.tipo == "match_parcial") {
+        formato.setBackground(Qt::green);
+        formato.setForeground(Qt::black);
+    } else if (evento.tipo == "match_total") {
+        formato.setBackground(Qt::blue);
+        formato.setForeground(Qt::white);
+    } else {
+        formato.setBackground(Qt::yellow);
+        formato.setForeground(Qt::black);
+    }
+
+    QList<QTextEdit::ExtraSelection> selTextoList;
+    QList<QTextEdit::ExtraSelection> selPatronList;
+
+    if (evento.posTexto >= 0 && evento.longitud > 0) {
+        QTextEdit::ExtraSelection sel;
+        QTextCursor cursor(ui->transmissionView->document());
+        cursor.setPosition(evento.posTexto);
+        cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor, evento.longitud);
+        sel.cursor = cursor;
+        sel.format = formato;
+        selTextoList.append(sel);
+    }
+
+    if (evento.posPatron >= 0 && evento.longitud > 0) {
+        QTextEdit::ExtraSelection sel;
+        QTextCursor cursor(ui->mcodeView->document());
+        cursor.setPosition(evento.posPatron);
+        cursor.movePosition(QTextCursor::NextCharacter, QTextCursor::KeepAnchor, evento.longitud);
+        sel.cursor = cursor;
+        sel.format = formato;
+        selPatronList.append(sel);
+    }
+
+    ui->transmissionView->setExtraSelections(selTextoList);
+    ui->mcodeView->setExtraSelections(selPatronList);
+}
+
+void MainWindow::pausar()
+{
+    int totalEventos = ui->comboParte->currentText().contains("Parte 3") ? eventosLCS.size() : eventosKMP.size();
+    if (timer->isActive()) {
         timer->stop();
         ui->lblEstado->setText("Estado: Pausado");
-    } else if(!eventos.empty()&&eventoActual<eventos.size()){
+    } else if (totalEventos > 0 && eventoActual < totalEventos) {
         timer->start(300);
         ui->lblEstado->setText("Estado: Reanudando...");
     }
 }
 
-void MainWindow::reiniciarKMP()
+void MainWindow::reiniciar()
 {
     timer->stop();
     eventoActual = 0;
+    bool isParte3 = ui->comboParte->currentText().contains("Parte 3");
+    int totalEventos = isParte3 ? eventosLCS.size() : eventosKMP.size();
 
-    if(!eventos.empty()){
-        mostrarEvento(eventos[0]);
-        ui->lblEstado->setText("Estado: Reiniciando");
-    }else{
+    if (totalEventos > 0) {
+        if (isParte3) {
+            mostrarEventoLCS(eventosLCS[0]);
+        } else {
+            mostrarEventoKMP(eventosKMP[0]);
+        }
+        ui->lblEstado->setText("Estado: Reiniciando animación");
+    } else {
         ui->lblEstado->setText("Estado: Listo");
     }
 }
