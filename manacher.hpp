@@ -16,8 +16,8 @@ void manacher(string texto) {
     }
 
     vector<int> P(t.length(),0);
-    int C;
-    int R;
+    int C = 0;
+    int R = 0;
 
     for (int i = 0; i < t.length(); i++) {
 
