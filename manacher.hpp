@@ -4,10 +4,11 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include "kmp.hpp"
 
 using namespace std;
 
-void manacher(string texto) {
+void manacher(string texto, vector<Evento>* log = nullptr, string nombreTexto = "") {
 
     string t = "#";
     for (int i = 0; i < texto.length(); i++) {
@@ -28,11 +29,19 @@ void manacher(string texto) {
 
         while((i-P[i] - 1 >= 0) && (i + P[i] + 1 < t.length()) && t[i-P[i]-1] == t[i+P[i]+1]) {
             P[i]++;   
+
+            if (log != nullptr) {
+                log ->push_back({"parte2", nombreTexto,"",i,P[i],"expandiendo"});
+            }
         }
 
         if (i+P[i]>R) {
             C = i;
             R = i + P[i];
+
+            if (log != nullptr) {
+                log -> push_back({"parte2", nombreTexto, "", i, P[i], "nuevoCentro"});
+            }
         }
     }
 
@@ -44,6 +53,10 @@ void manacher(string texto) {
             maxLen=P[i];
             centro = i;
         }
+    }
+
+    if (log != nullptr) {
+        log->push_back({"parte2", nombreTexto, "", centro, maxLen, "palindromo_max"});
     }
 
     int inicio = (centro - maxLen) / 2+1;
