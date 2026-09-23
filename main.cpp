@@ -4,6 +4,7 @@
 #include <string>
 #include <vector>
 #include "kmp.hpp"
+#include "manacher.hpp"
 
 using namespace std;
 
