@@ -14,12 +14,20 @@ qt_add_executable(Evidencia1Visualizer
     mcode1.txt mcode2.txt  transmission1.txt
     transmission2.txt
     mcode3.txt
+    style.qss
 )
 configure_file(transmission1.txt transmission1.txt COPYONLY)
 configure_file(transmission2.txt transmission2.txt COPYONLY)
 configure_file(mcode1.txt mcode1.txt COPYONLY)
 configure_file(mcode2.txt mcode2.txt COPYONLY)
 configure_file(mcode3.txt mcode3.txt COPYONLY)
+configure_file(style.qss style.qss COPYONLY)
+
+add_custom_command(TARGET Evidencia1Visualizer POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+            ${CMAKE_SOURCE_DIR}/style.qss
+            $<TARGET_FILE_DIR:Evidencia1Visualizer>/style.qss
+)
 target_link_libraries(Evidencia1Visualizer
     PRIVATE
         Qt::Core

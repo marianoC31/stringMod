@@ -1,0 +1,119 @@
+/* Style sheets como css */
+
+/* Fondo general de la ventana */
+QMainWindow, QWidget {
+    background-color: #F4F6F9;
+    font-family: "Segoe UI", "Inter", sans-serif;
+    font-size: 13px;
+    color: #22293B;
+}
+
+QGroupBox {
+    border: 1px solid #DDE2EC;
+    border-radius: 10px;
+    margin-top: 14px;
+    padding: 14px 10px 10px 10px;
+    background-color: #FFFFFF;
+    font-weight: 600;
+}
+QGroupBox::title {
+    subcontrol-origin: margin;
+    left: 12px;
+    padding: 0 6px;
+    color: #4C5FD5;
+}
+
+
+QLabel {
+    color: #4A5268;
+}
+QLabel#estadoLabel {
+    font-weight: 600;
+    color: #4C5FD5;
+    padding: 4px 0;
+}
+
+
+QComboBox {
+    background-color: #FFFFFF;
+    border: 1px solid #D7DBE6;
+    border-radius: 8px;
+    padding: 6px 10px;
+    min-height: 22px;
+}
+QComboBox:hover {
+    border: 1px solid #4C5FD5;
+}
+QComboBox::drop-down {
+    border: none;
+    width: 24px;
+}
+QComboBox QAbstractItemView {
+    background-color: #FFFFFF;
+    border: 1px solid #D7DBE6;
+    selection-background-color: #4C5FD5;
+    selection-color: #FFFFFF;
+    outline: none;
+}
+
+/* ---------- Botones ---------- */
+QPushButton {
+    background-color: #4C5FD5;
+    color: #FFFFFF;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-weight: 600;
+}
+QPushButton:hover {
+    background-color: #3E4FC0;
+}
+QPushButton:pressed {
+    background-color: #333FA6;
+}
+QPushButton:disabled {
+    background-color: #C6CBE0;
+    color: #F0F1F8;
+}
+
+
+QPushButton#btnPausar {
+    background-color: #FFFFFF;
+    color: #4C5FD5;
+    border: 1px solid #4C5FD5;
+}
+QPushButton#btnPausar:hover {
+    background-color: #EEF0FD;
+}
+QPushButton#btnReiniciar {
+    background-color: #FFFFFF;
+    color: #E05555;
+    border: 1px solid #E05555;
+}
+QPushButton#btnReiniciar:hover {
+    background-color: #FDEEEE;
+}
+
+QTextEdit, QPlainTextEdit {
+    background-color: #0E1421;
+    color: #E8ECF5;
+    border: 1px solid #1C2536;
+    border-radius: 8px;
+    padding: 10px;
+    font-family: "Cascadia Code", "Consolas", "Courier New", monospace;
+    font-size: 14px;
+    letter-spacing: 1px; /* ayuda a separar los caracteres hex visualmente */
+}
+
+
+QProgressBar {
+    border: 1px solid #D7DBE6;
+    border-radius: 6px;
+    background-color: #FFFFFF;
+    text-align: center;
+    height: 14px;
+}
+QProgressBar::chunk {
+    background-color: #4C5FD5;
+    border-radius: 6px;
+}

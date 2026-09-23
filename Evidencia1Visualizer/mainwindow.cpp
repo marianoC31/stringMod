@@ -18,8 +18,8 @@ MainWindow::MainWindow(QWidget *parent)
             &MainWindow::mostrarSiguienteEvento);
 
     ui->comboParte->addItem("Parte 1 - KMP");
-    ui->comboParte->addItem("Parte 2");
-    ui->comboParte->addItem("Parte 3");
+    ui->comboParte->addItem("Parte 2 - Manacher");
+    ui->comboParte->addItem("Parte 3 - LCS");
 
     ui->comboTransmission->addItem("transmission1.txt");
     ui->comboTransmission->addItem("transmission2.txt");
@@ -40,6 +40,12 @@ MainWindow::MainWindow(QWidget *parent)
             &QComboBox::currentIndexChanged,
             this,
             &MainWindow::actualizarSeleccion);
+    connect(ui->sliderVelocidad,
+            &QSlider::valueChanged,
+            this,
+            [this](int valor){
+                timer->setInterval(valor);
+            });
     connect(ui->btnIniciar,
             &QPushButton::clicked,
             this,
@@ -86,13 +92,14 @@ void MainWindow::cambiarParte()
     timer->stop();
     eventosKMP.clear();
     eventosLCS.clear();
+    eventosManacher.clear();
     eventoActual = 0;
     ui->transmissionView->setExtraSelections({});
     ui->mcodeView->setExtraSelections({});
 
     QString parte = ui->comboParte->currentText();
 
-    if (parte.contains("Parte 3")) {
+    if (parte.contains("Parte 3 - LCS")) {
         ui->label->setText("Transmission 1:");
         ui->label_2->setText("Transmission 2:");
         ui->comboTransmission->setEnabled(false);
@@ -104,22 +111,33 @@ void MainWindow::cambiarParte()
         ui->transmissionView->setPlainText(t1);
         ui->mcodeView->setPlainText(t2);
         ui->lblEstado->setText("Estado: Listo para Parte 3 (LCS)\nPresione 'Iniciar' para buscar la subcadena común más larga.");
-    } else if (parte.contains("Parte 1")) {
+    } else if (parte.contains("Parte 1 - KMP")) {
         ui->label->setText("Transmission:");
         ui->label_2->setText("MCode:");
         ui->comboTransmission->setEnabled(true);
         ui->comboMCode->setEnabled(true);
         actualizarSeleccion();
-    } else {
-        ui->lblEstado->setText("Estado: Parte 2 aún no disponible");
+    } else if(parte.contains("Parte 2 - Manacher")){
+        ui->label->setText("Transmission:");
+        ui->label_2->setText("Palíndromo más largo:");
+        ui->comboTransmission->setEnabled(true);
+        ui->comboMCode->setEnabled(false);
+        actualizarSeleccion();
     }
 }
 
 void MainWindow::actualizarSeleccion()
 {
     QString parte = ui->comboParte->currentText();
-    if (parte.contains("Parte 3")) return;
-
+    if (parte.contains("Parte 3 - LCS")) return;
+    if(parte.contains("Parte 2 - Manacher")){
+        timer->stop();
+        ui->transmissionView->setExtraSelections({});
+        ui->transmissionView->setPlainText(leerArchivo(ui->comboTransmission->currentText()));
+        ui->mcodeView->clear();
+        ui->lblEstado->setText("Estado: Listo para Parte 2 (Manacher)\nPresione 'Iniciar' para buscar el palíndromo más largo.");
+        return;
+    }
     QString nombreTransmission = ui->comboTransmission->currentText();
     QString nombreMCode = ui->comboMCode->currentText();
     QString transmission = leerArchivo(nombreTransmission);
@@ -133,10 +151,12 @@ void MainWindow::actualizarSeleccion()
 void MainWindow::iniciarAlgoritmo()
 {
     QString parte = ui->comboParte->currentText();
-    if (parte.contains("Parte 1")) {
+    if (parte.contains("Parte 1 - KMP")) {
         iniciarKMP();
-    } else if (parte.contains("Parte 3")) {
+    } else if (parte.contains("Parte 3 - LCS")) {
         iniciarLCS();
+    } else if(parte.contains("Parte 2 - Manacher")){
+        iniciarManacher();
     } else {
         ui->lblEstado->setText("Estado: Seleccione Parte 1 o Parte 3");
     }
@@ -169,7 +189,7 @@ void MainWindow::iniciarKMP()
 
     if (!eventosKMP.empty()) {
         eventoActual = 0;
-        timer->start(300);
+        timer->start(ui->sliderVelocidad->value());
     }
 }
 
@@ -207,15 +227,31 @@ void MainWindow::iniciarLCS()
 
     if (!eventosLCS.empty()) {
         eventoActual = 0;
-        timer->start(300);
+        timer->start(ui->sliderVelocidad->value());
     }
 }
 
 void MainWindow::mostrarSiguienteEvento()
 {
     QString parte = ui->comboParte->currentText();
-
-    if (parte.contains("Parte 3")) {
+    if(parte.contains("Parte 2 - Manacher")){
+        if(eventoActual>=(int)eventosManacher.size()){
+            timer->stop();
+            ui->lblEstado->setText(resumenManacher+"\n✓ Animación completada");
+            return;
+        }
+        const Evento &evento = eventosManacher[eventoActual];
+        ui->lblEstado->setText(QString("Evento %1/%2\nTipo: %3\nCentro: %4\nRadio: %5")
+                                   .arg(eventoActual + 1)
+                                   .arg(eventosManacher.size())
+                                   .arg(QString::fromStdString(evento.tipo))
+                                   .arg(evento.posTexto)
+                                   .arg(evento.posPatron));
+        mostrarEventoManacher(evento);
+        eventoActual++;
+        return;
+    }
+    if (parte.contains("Parte 3 - LCS")) {
         if (eventoActual >= eventosLCS.size()) {
             timer->stop();
             ui->lblEstado->setText(ui->lblEstado->text() + "\n✓ Animación completada");
@@ -376,14 +412,93 @@ void MainWindow::mostrarEventoLCS(const EventoLCS &evento)
     ui->mcodeView->setExtraSelections(selPatronList);
 }
 
+void MainWindow::iniciarManacher()
+{
+    timer->stop();
+    QString nombre = ui->comboTransmission->currentText();
+    QString transmission = leerArchivo(nombre);
+
+    eventosManacher.clear();
+    eventoActual = 0;
+
+    ui->transmissionView->setPlainText(transmission);
+    ui->mcodeView->clear();
+
+    ResultadoManacher res = manacher(transmission.toStdString(),
+                                     &eventosManacher,
+                                     nombre.toStdString());
+    if(res.longitud==0){
+        resumenManacher = "Estado: No se encontró palíndromo";
+    }else{
+        resumenManacher = QString("Estado: Palíndromo más largo: \%1\"(longitd: %2)\nPosición: [%3, %4]")
+                              .arg(QString::fromStdString(res.subcadena))
+                              .arg(res.longitud)
+                              .arg(res.inicio+1)
+                              .arg(res.fin+1);
+    }
+    ui->lblEstado->setText(resumenManacher);
+
+    if(!eventosManacher.empty()){
+        timer->start(ui->sliderVelocidad->value());
+
+    }
+}
+void MainWindow::mostrarEventoManacher(const Evento &evento)
+{
+    QFont fuente("Courier New");
+    fuente.setStyleHint(QFont::Monospace);
+    ui->transmissionView->setFont(fuente);
+    ui->mcodeView->setFont(fuente);
+
+    int inicio = (evento.posTexto - evento.posPatron)/2;
+    int longitud = evento.posPatron;
+
+    QString texto = ui->transmissionView->toPlainText();
+    ui->mcodeView->setPlainText(QString(inicio,' ')+texto.mid(inicio,longitud));
+
+    QTextCharFormat formato;
+    if(evento.tipo=="nuevoCentro"){
+        formato.setBackground(Qt::green);  formato.setForeground(Qt::black);
+    } else if (evento.tipo == "palindromo_max") {
+        formato.setBackground(Qt::blue);   formato.setForeground(Qt::white);
+    } else { // expandiendo
+        formato.setBackground(Qt::yellow); formato.setForeground(Qt::black);
+    }
+
+    QList<QTextEdit::ExtraSelection> selTexto, selPal;
+    if(longitud>0){
+        auto crear = [&](QTextEdit *view){
+            QTextEdit::ExtraSelection sel;
+            QTextCursor c(view->document());
+            c.setPosition((inicio));
+            c.movePosition(QTextCursor::NextCharacter,QTextCursor::KeepAnchor, longitud);
+            sel.cursor = c;
+            sel.format = formato;
+            return sel;
+        };
+        selTexto.append(crear(ui->transmissionView));
+        selPal.append(crear(ui->mcodeView));
+
+        }
+    ui->transmissionView->setExtraSelections(selTexto);
+    ui->mcodeView->setExtraSelections(selPal);
+
+}
+int MainWindow::totalEventos() const
+{
+    QString parte = ui->comboParte->currentText();
+    if(parte.contains("Parte 2 - Manacher")) return eventosManacher.size();
+    if(parte.contains("Parte 3 - LCS")) return eventosLCS.size();
+    return eventosKMP.size();
+}
 void MainWindow::pausar()
 {
-    int totalEventos = ui->comboParte->currentText().contains("Parte 3") ? eventosLCS.size() : eventosKMP.size();
+    int total = totalEventos();
     if (timer->isActive()) {
         timer->stop();
         ui->lblEstado->setText("Estado: Pausado");
-    } else if (totalEventos > 0 && eventoActual < totalEventos) {
-        timer->start(300);
+    } else if (total > 0 && eventoActual < total) {
+        timer->start(ui->sliderVelocidad->value());
         ui->lblEstado->setText("Estado: Reanudando...");
     }
 }
@@ -392,15 +507,13 @@ void MainWindow::reiniciar()
 {
     timer->stop();
     eventoActual = 0;
-    bool isParte3 = ui->comboParte->currentText().contains("Parte 3");
-    int totalEventos = isParte3 ? eventosLCS.size() : eventosKMP.size();
+    QString parte = ui->comboParte->currentText();
+    int total = totalEventos();
 
-    if (totalEventos > 0) {
-        if (isParte3) {
-            mostrarEventoLCS(eventosLCS[0]);
-        } else {
-            mostrarEventoKMP(eventosKMP[0]);
-        }
+    if (total > 0) {
+        if (parte.contains("Parte 2 - Manacher")) mostrarEventoManacher(eventosManacher[0]);
+        else if(parte.contains("Parte 3 -> LCS")) mostrarEventoLCS(eventosLCS[0]);
+        else mostrarEventoKMP(eventosKMP[0]);
         ui->lblEstado->setText("Estado: Reiniciando animación");
     } else {
         ui->lblEstado->setText("Estado: Listo");

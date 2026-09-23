@@ -4,11 +4,8 @@
 #include <string>
 #include <vector>
 #include "kmp.hpp"
-<<<<<<< HEAD
 #include "manacher.hpp"
-=======
 #include "lcs.hpp"
->>>>>>> origin/feature/parte3-lcs
 
 using namespace std;
 
@@ -57,11 +54,9 @@ int main() {
         }
     }
 
-<<<<<<< HEAD
     manacher(transmission1);
     manacher(transmission2);
     
-=======
     // Parte 3: Subcadena común más larga entre transmission1 y transmission2
     ResultadoLCS lcsRes = longestCommonSubstring(transmission1, transmission2);
     if (lcsRes.longitud > 0) {
@@ -70,6 +65,5 @@ int main() {
         cout << "0 0" << endl;
     }
 
->>>>>>> origin/feature/parte3-lcs
     return 0;
 }

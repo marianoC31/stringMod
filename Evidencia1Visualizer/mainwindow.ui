@@ -6,12 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>680</width>
-    <height>600</height>
+    <width>671</width>
+    <height>688</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
+  </property>
+  <property name="animated">
+   <bool>true</bool>
   </property>
   <widget class="QWidget" name="centralwidget">
    <widget class="QComboBox" name="comboParte">
@@ -39,7 +42,7 @@
      <rect>
       <x>280</x>
       <y>140</y>
-      <width>121</width>
+      <width>141</width>
       <height>26</height>
      </rect>
     </property>
@@ -47,8 +50,8 @@
    <widget class="QPushButton" name="btnIniciar">
     <property name="geometry">
      <rect>
-      <x>250</x>
-      <y>180</y>
+      <x>130</x>
+      <y>190</y>
       <width>93</width>
       <height>29</height>
      </rect>
@@ -60,8 +63,8 @@
    <widget class="QPushButton" name="btnPausar">
     <property name="geometry">
      <rect>
-      <x>250</x>
-      <y>210</y>
+      <x>240</x>
+      <y>190</y>
       <width>93</width>
       <height>29</height>
      </rect>
@@ -73,8 +76,8 @@
    <widget class="QPushButton" name="btnReiniciar">
     <property name="geometry">
      <rect>
-      <x>250</x>
-      <y>240</y>
+      <x>350</x>
+      <y>190</y>
       <width>93</width>
       <height>29</height>
      </rect>
@@ -100,9 +103,9 @@
     <property name="geometry">
      <rect>
       <x>90</x>
-      <y>430</y>
-      <width>411</width>
-      <height>131</height>
+      <y>500</y>
+      <width>491</width>
+      <height>111</height>
      </rect>
     </property>
     <property name="text">
@@ -129,9 +132,9 @@
     <property name="geometry">
      <rect>
       <x>150</x>
-      <y>140</y>
-      <width>63</width>
-      <height>20</height>
+      <y>130</y>
+      <width>101</width>
+      <height>41</height>
      </rect>
     </property>
     <property name="text">
@@ -164,18 +167,99 @@
      <bool>true</bool>
     </property>
    </widget>
+   <widget class="QSlider" name="sliderVelocidad">
+    <property name="geometry">
+     <rect>
+      <x>180</x>
+      <y>270</y>
+      <width>291</width>
+      <height>22</height>
+     </rect>
+    </property>
+    <property name="minimum">
+     <number>50</number>
+    </property>
+    <property name="maximum">
+     <number>1000</number>
+    </property>
+    <property name="value">
+     <number>550</number>
+    </property>
+    <property name="sliderPosition">
+     <number>550</number>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Orientation::Horizontal</enum>
+    </property>
+    <property name="invertedAppearance">
+     <bool>false</bool>
+    </property>
+    <property name="invertedControls">
+     <bool>false</bool>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_3">
+    <property name="geometry">
+     <rect>
+      <x>260</x>
+      <y>240</y>
+      <width>81</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Velocidad:</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_4">
+    <property name="geometry">
+     <rect>
+      <x>480</x>
+      <y>270</y>
+      <width>41</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Lento</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_5">
+    <property name="geometry">
+     <rect>
+      <x>120</x>
+      <y>270</y>
+      <width>51</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Rápido</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>680</width>
+     <width>671</width>
      <height>26</height>
     </rect>
    </property>
+   <widget class="QMenu" name="menuhol">
+    <property name="title">
+     <string>code</string>
+    </property>
+   </widget>
+   <addaction name="menuhol"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionStringsSearch">
+   <property name="text">
+    <string>StringsSearch</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections/>
